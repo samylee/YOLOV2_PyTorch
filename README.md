@@ -11,6 +11,6 @@ yolov2 to pytorch
 [yolov2-tiny-voc.weights](https://pjreddie.com/media/files/yolov2-tiny-voc.weights)
 
 ## Reference
-https://pjreddie.com/darknet/yolov2/
-https://github.com/AlexeyAB/darknet
-https://blog.csdn.net/samylee
+https://pjreddie.com/darknet/yolov2/  
+https://github.com/AlexeyAB/darknet  
+https://blog.csdn.net/samylee  
