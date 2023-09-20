@@ -9,11 +9,11 @@ def postprocess(output, num_classes, anchors, conf_thresh, img_w, img_h):
     num_samples, _, grid_size, _ = output.shape
     num_anchors = anchors.size(0)
 
-    # num_samples, 5(anchors), 13(grid), 13(grid), 25 (tx, ty, tw, th, conf, classes)
+    # num_samples, 13(grid), 13(grid), 5(anchors), 25 (tx, ty, tw, th, conf, classes)
     output_permute = (
-        output.view(num_samples, num_anchors, num_classes + 5, grid_size, grid_size)
-            .permute(0, 1, 3, 4, 2)
-            .contiguous()
+        output.permute(0, 2, 3, 1)
+        .view(num_samples, grid_size, grid_size, num_anchors, num_classes + 5)
+        .contiguous()
     )
 
     # tx, ty, tw, th
@@ -27,11 +27,11 @@ def postprocess(output, num_classes, anchors, conf_thresh, img_w, img_h):
     pred_cls = torch.softmax(output_permute[..., 5:], dim=-1)
 
     # decode boxes
-    pred_coords = torch.empty((num_samples, num_anchors, grid_size, grid_size, 4), dtype=torch.float32)
-    pred_coords[..., 0] = pred_tx + torch.arange(grid_size).repeat(grid_size, 1).view([1, 1, grid_size, grid_size]).float()
-    pred_coords[..., 1] = pred_ty + torch.arange(grid_size).repeat(grid_size, 1).t().view([1, 1, grid_size, grid_size]).float()
-    pred_coords[..., 2] = torch.exp(pred_tw) * anchors[:, 0].view(1, num_anchors, 1, 1)
-    pred_coords[..., 3] = torch.exp(pred_th) * anchors[:, 1].view(1, num_anchors, 1, 1)
+    pred_coords = torch.empty((num_samples, grid_size, grid_size, num_anchors, 4), dtype=torch.float32)
+    pred_coords[..., 0] = pred_tx + torch.arange(grid_size).repeat(grid_size, 1).view([1, grid_size, grid_size, 1]).float()
+    pred_coords[..., 1] = pred_ty + torch.arange(grid_size).repeat(grid_size, 1).t().view([1, grid_size, grid_size, 1]).float()
+    pred_coords[..., 2] = torch.exp(pred_tw) * anchors[:, 0].view(1, 1, 1, num_anchors)
+    pred_coords[..., 3] = torch.exp(pred_th) * anchors[:, 1].view(1, 1, 1, num_anchors)
 
     # num_samples, (s*s*a), (C+5)
     predictions = torch.cat(
